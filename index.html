@@ -14,6 +14,7 @@
    字号    标题重、正文轻，clamp 流式层级
    ============================================================ */
 :root{
+ color-scheme:dark;
  --ink:#eceaf5; --ink2:#b3aecb; --muted:#79748f;
  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.055);
  --bg:#13121f; --card:#2a273a; --card2:#353149; --glass:rgba(20,18,33,.55);
@@ -29,7 +30,11 @@
  --sp:clamp(20px,4.5vw,52px);
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;background:#0e0b18}
+html::-webkit-scrollbar{width:12px}
+html::-webkit-scrollbar-track{background:#0e0b18}
+html::-webkit-scrollbar-thumb{background:rgba(139,120,255,.28);border-radius:6px;border:3px solid #0e0b18}
+html::-webkit-scrollbar-thumb:hover{background:rgba(139,120,255,.45)}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
  color:var(--ink);background:var(--bg);line-height:1.78;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
  font-feature-settings:"tnum" 1;letter-spacing:.1px;
