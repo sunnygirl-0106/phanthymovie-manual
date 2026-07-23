@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhanthyMovie 使用指南 · 交互版</title>
+<style>
+/* ============================================================
+   PhanthyMovie · 设计 Token（可统一维护）
+   ------------------------------------------------------------
+   颜色    近黑底 + 极轻紫/青辉光；主色电幻紫，点缀青+琥珀金
+   边框    白色 8% 透明度 hairline
+   层次    靠明度、边框、柔和辉光拉开，克制发光
+   字号    标题重、正文轻，clamp 流式层级
+   ============================================================ */
+:root{
+ --ink:#eceaf5; --ink2:#b3aecb; --muted:#79748f;
+ --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.055);
+ --bg:#13121f; --card:#2a273a; --card2:#353149; --glass:rgba(20,18,33,.55);
+ --pri:#8b78ff; --pri2:#a996ff; --pri-soft:rgba(139,120,255,.14);
+ --cyan:#37e0cb; --gold:#f7b64a; --gold-soft:rgba(247,182,74,.12);
+ --warn:#ff8a63; --warn-soft:rgba(255,138,99,.10);
+ --tip:#37d9ac;  --tip-soft:rgba(55,217,172,.10);
+ --note:#6aa6ff; --note-soft:rgba(106,166,255,.10);
+ --case:#c58cff; --case-soft:rgba(197,140,255,.10);
+ --radius:16px; --radius-sm:12px;
+ --shadow:0 18px 50px -18px rgba(0,0,0,.7);
+ --edge:inset 0 1px 0 rgba(255,255,255,.05);
+ --sp:clamp(20px,4.5vw,52px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+ color:var(--ink);background:var(--bg);line-height:1.78;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+ font-feature-settings:"tnum" 1;letter-spacing:.1px;
+ background-image:
+  radial-gradient(680px 460px at 84% -8%,rgba(139,120,255,.13),transparent 60%),
+  radial-gradient(620px 480px at -8% 8%,rgba(55,224,203,.055),transparent 60%),
+  radial-gradient(900px 640px at 50% 112%,rgba(247,182,74,.04),transparent 62%);
+ background-attachment:fixed}
+/* 记忆点：点阵花纹 */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.8;
+ background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:28px 28px;
+ -webkit-mask-image:radial-gradient(150% 130% at 50% 24%,#000 52%,transparent 96%);
+ mask-image:radial-gradient(150% 130% at 50% 24%,#000 52%,transparent 96%)}
+/* 缓慢流动的光波 */
+body::after{content:"";position:fixed;inset:-25%;z-index:-2;pointer-events:none;opacity:1;filter:blur(16px);
+ background:
+  radial-gradient(1050px 800px at 52% 40%,rgba(139,120,255,.10),transparent 70%),
+  radial-gradient(680px 480px at 13% 20%,rgba(139,120,255,.24),transparent 60%),
+  radial-gradient(640px 460px at 90% 68%,rgba(55,224,203,.16),transparent 60%),
+  radial-gradient(560px 400px at 66% 8%,rgba(247,182,74,.09),transparent 60%);
+ animation:aurora 26s ease-in-out infinite alternate}
+@keyframes aurora{0%{transform:translate3d(-2%,-1%,0) scale(1) rotate(0deg)}100%{transform:translate3d(3%,2%,0) scale(1.1) rotate(2deg)}}
+::selection{background:rgba(139,120,255,.32);color:#fff}
+a{color:var(--pri2);text-decoration:none;transition:color .15s}
+a:hover{color:#c3b6ff}
+code{background:var(--pri-soft);color:#c9bdff;padding:1.5px 7px;border-radius:6px;font-size:.85em;
+ font-family:"SF Mono",ui-monospace,Consolas,Menlo,monospace;border:1px solid rgba(139,120,255,.22)}
+.hl{background:linear-gradient(transparent 62%,rgba(247,182,74,.30) 62%);padding:0 3px;border-radius:2px}
+
+#prog{position:fixed;top:0;left:0;height:6px;width:0;z-index:99;transition:width .1s linear;border-radius:0 4px 4px 0;
+ background:linear-gradient(90deg,var(--pri),var(--cyan) 60%,var(--gold));box-shadow:0 0 16px rgba(139,120,255,.7)}
+#prog::after{content:"🚀";position:absolute;right:-2px;top:-3px;font-size:22px;line-height:1;
+ filter:drop-shadow(0 3px 7px rgba(139,120,255,.6));animation:progRun .8s ease-in-out infinite}
+@keyframes progRun{0%,100%{transform:translateY(0) rotate(38deg)}50%{transform:translateY(-3px) rotate(46deg)}}
+
+.wrap{display:flex;max-width:1340px;margin:0 auto;gap:0;align-items:flex-start}
+
+.side{width:284px;flex:none;position:sticky;top:0;height:100vh;overflow-y:auto;padding:24px 14px 40px;
+ border-right:0;background:transparent}
+.side::-webkit-scrollbar{width:6px} .side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.side::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.18)}
+.brand{display:flex;align-items:center;gap:11px;padding:6px 10px 18px}
+.brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,var(--pri),#6f5bff);
+ display:grid;place-items:center;color:#fff;font-size:19px;box-shadow:0 6px 20px -4px rgba(139,120,255,.6),var(--edge)}
+.brand b{font-size:15.5px;letter-spacing:.2px;color:#fff} .brand span{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:1px}
+.searchbox{position:relative;margin:0 8px 16px}
+.searchbox input{width:100%;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:11px;
+ padding:10px 12px 10px 34px;font-size:13px;color:var(--ink);outline:none;transition:.16s}
+.searchbox input::placeholder{color:var(--muted)}
+.searchbox input:focus{border-color:rgba(139,120,255,.6);box-shadow:0 0 0 3px var(--pri-soft);background:rgba(255,255,255,.05)}
+.searchbox svg{position:absolute;left:11px;top:11px;width:15px;height:15px;fill:var(--muted)}
+.nav-link{display:flex;gap:11px;align-items:center;padding:9px 12px;border-radius:11px;color:var(--ink2);
+ font-size:13.5px;transition:background .15s,color .15s,border-color .15s;margin-bottom:2px;
+ border:1px solid transparent;position:relative}
+.nav-link:hover{background:rgba(255,255,255,.04);color:#fff}
+.nav-link.active{background:linear-gradient(100deg,rgba(139,120,255,.18),rgba(139,120,255,.04));color:#fff;
+ border-color:rgba(139,120,255,.32)}
+.nav-link.active::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);
+ width:3px;height:18px;border-radius:0 3px 3px 0;background:linear-gradient(var(--pri),var(--cyan));box-shadow:0 0 12px var(--pri)}
+.nl-ic{font-size:15px;width:20px;text-align:center;flex:none;filter:grayscale(.15)}
+.nl-tx{display:flex;flex-direction:column;line-height:1.32}
+.nl-tx em{font-style:normal;font-size:10.5px;opacity:.55;font-weight:400;letter-spacing:.3px}
+.nav-link.active .nl-tx em{opacity:.85;color:var(--pri2)}
+
+.main{flex:1;min-width:0;padding:0 0 90px}
+
+.hero{position:relative;overflow:hidden;color:#fff;display:flex;align-items:center;min-height:min(86vh,780px);
+ padding:clamp(72px,10vw,120px) var(--sp) clamp(96px,12vw,150px);
+ background:
+  radial-gradient(1200px 520px at 82% -18%,rgba(139,120,255,.30),transparent 56%),
+  radial-gradient(800px 460px at 6% 128%,rgba(55,224,203,.12),transparent 60%),
+  linear-gradient(158deg,#08060f,#100a24 54%,#1a1140)}
+/* 漂浮辉光球 */
+.hero-orbs{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.hero-orbs span{position:absolute;border-radius:50%;filter:blur(64px);mix-blend-mode:screen;will-change:transform}
+.hero-orbs span:nth-child(1){width:380px;height:380px;top:-8%;right:6%;background:radial-gradient(circle,rgba(139,120,255,.85),transparent 70%);opacity:.5;animation:orb1 18s ease-in-out infinite}
+.hero-orbs span:nth-child(2){width:320px;height:320px;bottom:-6%;left:2%;background:radial-gradient(circle,rgba(55,224,203,.8),transparent 70%);opacity:.32;animation:orb2 23s ease-in-out infinite}
+.hero-orbs span:nth-child(3){width:230px;height:230px;top:32%;left:46%;background:radial-gradient(circle,rgba(247,182,74,.8),transparent 70%);opacity:.2;animation:orb3 27s ease-in-out infinite}
+@keyframes orb1{0%,100%{transform:translate(0,0)}50%{transform:translate(-46px,34px)}}
+@keyframes orb2{0%,100%{transform:translate(0,0)}50%{transform:translate(44px,-32px)}}
+@keyframes orb3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-26px,-22px) scale(1.18)}}
+/* 底部融入页面，消除生硬边缘 */
+.hero-blend{position:absolute;left:0;right:0;bottom:-1px;height:190px;pointer-events:none;z-index:2;
+ background:linear-gradient(to bottom,transparent,var(--bg))}
+/* 内容入场（错峰上浮）*/
+.hero.anim .hero-in>*{opacity:0;animation:heroUp .85s cubic-bezier(.2,.7,.2,1) both}
+.hero.anim .hero-in>*:nth-child(1){animation-delay:.05s}.hero.anim .hero-in>*:nth-child(2){animation-delay:.15s}
+.hero.anim .hero-in>*:nth-child(3){animation-delay:.26s}.hero.anim .hero-in>*:nth-child(4){animation-delay:.37s}
+.hero.anim .hero-in>*:nth-child(5){animation-delay:.48s}.hero.anim .hero-in>*:nth-child(6){animation-delay:.59s}
+@keyframes heroUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.hm b i{font-style:normal}
+.hero .btn-p{animation:pulseGlow 3.6s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 10px 30px -8px rgba(139,120,255,.6),var(--edge)}50%{box-shadow:0 16px 44px -6px rgba(139,120,255,.95),0 0 0 1px rgba(168,150,255,.45),var(--edge)}}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+ background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+ background-size:52px 52px;
+ -webkit-mask-image:radial-gradient(820px 460px at 26% 16%,#000,transparent 76%);
+ mask-image:radial-gradient(820px 460px at 26% 16%,#000,transparent 76%)}
+.hero::after{content:"";position:absolute;top:-40%;right:-10%;width:70%;height:180%;pointer-events:none;
+ background:conic-gradient(from 210deg at 50% 50%,transparent 0deg,rgba(139,120,255,.16) 40deg,rgba(55,224,203,.08) 80deg,transparent 130deg);
+ filter:blur(30px);transform-origin:70% 30%;animation:sweep 16s ease-in-out infinite alternate;opacity:.9}
+@keyframes sweep{from{transform:rotate(-12deg) scale(1)}to{transform:rotate(10deg) scale(1.08)}}
+.hero-in{position:relative;max-width:820px;z-index:1}
+.hero .kicker{display:inline-flex;align-items:center;gap:7px;font-size:12px;letter-spacing:.6px;
+ background:rgba(139,120,255,.12);border:1px solid rgba(139,120,255,.3);padding:6px 15px;border-radius:999px;margin-bottom:26px;
+ color:#d9d0ff;backdrop-filter:blur(6px);box-shadow:var(--edge)}
+.hero h1{font-size:clamp(32px,5.4vw,54px);line-height:1.12;margin:0 0 18px;font-weight:800;letter-spacing:-.5px;
+ text-shadow:0 4px 40px rgba(0,0,0,.5)}
+.hero h1 .g{background:linear-gradient(96deg,#b6a6ff,#8b78ff 28%,#37e0cb 58%,#b6a6ff);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 7s ease-in-out infinite}
+@keyframes shine{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero p.lead{font-size:clamp(15px,1.6vw,17px);color:#c5bfe0;margin:0 0 24px;max-width:640px;line-height:1.7}
+.hero .creed-h{font-size:clamp(17px,2vw,21px);font-weight:700;margin:0 0 30px;display:inline-block;color:#fff;
+ border-left:3px solid var(--gold);padding-left:15px;letter-spacing:.3px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:600;font-size:14.5px;
+ transition:transform .18s,box-shadow .18s,background .18s,border-color .18s;cursor:pointer;border:0}
+.btn-p{background:linear-gradient(140deg,#8b78ff,#6f5bff);color:#fff;box-shadow:0 10px 30px -8px rgba(139,120,255,.7),var(--edge)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 16px 40px -8px rgba(139,120,255,.85),var(--edge)}
+.btn-g{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px)}
+.btn-g:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.34)}
+.hero-meta{display:flex;gap:clamp(20px,4vw,40px);margin-top:42px;flex-wrap:wrap}
+.hm{display:flex;flex-direction:column;position:relative;padding-left:15px}
+.hm::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;border-radius:2px;background:linear-gradient(var(--gold),transparent)}
+.hm b{font-size:clamp(20px,2.4vw,26px);color:#ffd479;font-weight:800;letter-spacing:-.5px}
+.hm span{font-size:12px;color:var(--muted);margin-top:2px}
+
+.sec{padding:clamp(44px,6vw,60px) var(--sp) 8px;scroll-margin-top:14px}
+.sec-head{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+.sec-ic{width:52px;height:52px;flex:none;border-radius:15px;background:linear-gradient(150deg,rgba(139,120,255,.2),rgba(139,120,255,.06));
+ border:1px solid rgba(139,120,255,.26);display:grid;place-items:center;font-size:25px;box-shadow:var(--edge),0 0 26px -6px rgba(139,120,255,.4)}
+.sec-chap{font-size:11.5px;color:var(--pri2);font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
+.sec h2{margin:3px 0 0;font-size:clamp(22px,2.6vw,27px);letter-spacing:-.3px;color:#fff;font-weight:800}
+.sec-body{padding-top:6px}
+.sec-body p{color:var(--ink2);margin:14px 0;text-wrap:pretty}
+.sec-body b,.sec-body strong{color:#f4f2ff;font-weight:700}
+.sec + .sec{border-top:1px solid var(--line2)}
+h4.mini{font-size:17px;margin:38px 0 6px;padding-left:14px;border-left:4px solid var(--pri);letter-spacing:.2px;color:#fff;font-weight:700}
+
+.creed{font-size:clamp(18px,2.4vw,23px);font-weight:800;color:#fff;text-align:center;padding:26px;margin:24px 0;
+ background:linear-gradient(135deg,rgba(139,120,255,.16),rgba(55,224,203,.06));border-radius:var(--radius);letter-spacing:.6px;
+ border:1px solid rgba(139,120,255,.3);box-shadow:inset 0 0 60px rgba(139,120,255,.07),var(--edge);position:relative;overflow:hidden}
+.creed::before{content:"";position:absolute;inset:0;background:radial-gradient(400px 120px at 50% 0,rgba(139,120,255,.22),transparent 70%)}
+
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:30px 0;justify-content:center;position:relative}
+.flow-step{flex:1;min-width:126px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+ padding:20px 12px 16px;text-align:center;position:relative;cursor:pointer;
+ transition:transform .2s,border-color .2s,box-shadow .2s;box-shadow:var(--edge)}
+.flow-step:hover{transform:translateY(-5px);border-color:rgba(139,120,255,.5);box-shadow:0 0 34px -6px rgba(139,120,255,.35),var(--edge)}
+.flow-step.accent{background:linear-gradient(155deg,#7c68ff,#6f5bff);border:1px solid rgba(168,150,255,.5);color:#fff;
+ box-shadow:0 0 40px -6px rgba(139,120,255,.6),var(--edge)}
+.flow-step.accent .fs-s{color:rgba(255,255,255,.8)}
+.flow-step.accent .fs-idx{background:#fff;color:#5b47cf}
+.fs-idx{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;
+ background:var(--gold);color:#1a1206;font-size:12px;font-weight:800;display:grid;place-items:center;
+ box-shadow:0 0 14px rgba(247,182,74,.65);border:2px solid var(--bg)}
+.fs-ic{font-size:25px;margin:6px 0 8px}
+.fs-t{font-weight:700;font-size:14.5px;color:#fff}
+.fs-s{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+.flow-arrow{display:flex;align-items:center;color:var(--pri2);font-size:18px;font-weight:700;opacity:.55}
+
+.shot{margin:24px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);
+ background:var(--card);box-shadow:var(--shadow),var(--edge)}
+.shot img{width:100%;display:block;cursor:zoom-in;transition:opacity .2s,filter .2s;filter:saturate(.96) brightness(.98)}
+.shot img:hover{opacity:.94;filter:saturate(1) brightness(1)}
+.shot .row2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.shot .row2 img{border-radius:0}
+.shot figcaption{font-size:12.5px;color:var(--muted);padding:11px 16px;background:rgba(255,255,255,.015);border-top:1px solid var(--line)}
+@media(max-width:640px){.shot .row2{grid-template-columns:1fr}}
+
+.steps{list-style:none;padding:0;margin:22px 0}
+.steps li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;background:var(--card);border:1px solid var(--line);
+ border-radius:var(--radius-sm);margin-bottom:8px;color:var(--ink2);transition:border-color .15s,background .15s;box-shadow:var(--edge)}
+.steps li:hover{border-color:rgba(139,120,255,.3);background:var(--card2)}
+.steps .num{flex:none;width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,var(--pri),#6f5bff);
+ color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center;margin-top:1px;box-shadow:0 0 14px -2px rgba(139,120,255,.6)}
+
+.callout{display:flex;gap:14px;padding:16px 18px;border-radius:var(--radius-sm);margin:20px 0;border:1px solid;
+ position:relative;overflow:hidden;box-shadow:var(--edge)}
+.callout::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.callout .co-ic{font-size:19px;flex:none;line-height:1.5}
+.callout .co-t{font-weight:700;margin-bottom:2px;font-size:14px;letter-spacing:.2px}
+.callout .co-body{font-size:14px} .callout .co-body>div:last-child{color:var(--ink2)}
+.callout.warn{background:var(--warn-soft);border-color:rgba(255,138,99,.24)} .callout.warn::before{background:var(--warn)} .callout.warn .co-t{color:var(--warn)}
+.callout.tip{background:var(--tip-soft);border-color:rgba(55,217,172,.24)} .callout.tip::before{background:var(--tip)} .callout.tip .co-t{color:var(--tip)}
+.callout.note{background:var(--note-soft);border-color:rgba(106,166,255,.24)} .callout.note::before{background:var(--note)} .callout.note .co-t{color:var(--note)}
+.callout.case{background:var(--case-soft);border-color:rgba(197,140,255,.24)} .callout.case::before{background:var(--case)} .callout.case .co-t{color:var(--case)}
+
+.group{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 18px;margin:20px 0;box-shadow:var(--edge)}
+.group h5{margin:0 0 8px;font-size:14px;color:var(--pri2);display:flex;align-items:center;gap:8px;font-weight:700}
+.group h5::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pri);box-shadow:0 0 8px var(--pri)}
+.group.group-warnlist h5{color:var(--warn)} .group.group-warnlist h5::before{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.group.group-case h5{color:var(--case)} .group.group-case h5::before{background:var(--case);box-shadow:0 0 8px var(--case)}
+.group ul{margin:0;padding-left:20px} .group li{color:var(--ink2);margin:6px 0;font-size:14px;text-wrap:pretty}
+
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+.tri-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;transition:border-color .15s,transform .15s;box-shadow:var(--edge)}
+.tri-card:hover{border-color:rgba(139,120,255,.32);transform:translateY(-3px)}
+.tri-card b{font-size:14.5px;color:#fff} .tri-card p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.tri-n{font-size:20px;font-weight:800;color:var(--pri2);margin-bottom:2px}
+@media(max-width:820px){.tri{grid-template-columns:1fr}}
+
+.five{display:grid;gap:8px;margin:20px 0}
+.five-i{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--pri);
+ border-radius:var(--radius-sm);padding:13px 16px;font-weight:600;font-size:14.5px;color:#fff;box-shadow:var(--edge)}
+.five-i span{flex:none;width:26px;height:26px;border-radius:50%;background:var(--pri-soft);color:var(--pri2);font-weight:700;
+ display:grid;place-items:center;font-size:13px;border:1px solid rgba(139,120,255,.3)}
+.five-i em{font-style:normal;font-weight:400;color:var(--muted);font-size:13px;margin-left:auto;text-align:right}
+@media(max-width:640px){.five-i em{display:none}}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.chip{background:var(--pri-soft);color:#c9bdff;font-size:13px;font-weight:600;padding:6px 13px;border-radius:999px;border:1px solid rgba(139,120,255,.24)}
+
+.faq{border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden;background:var(--card);transition:border-color .15s,box-shadow .15s;box-shadow:var(--edge)}
+.faq.open{border-color:rgba(139,120,255,.34);box-shadow:0 0 30px -8px rgba(139,120,255,.28)}
+.faq-q{width:100%;display:flex;align-items:center;gap:12px;padding:16px 18px;background:none;border:0;cursor:pointer;text-align:left;font-size:15px;font-weight:600;color:#fff}
+.faq-badge{flex:none;background:linear-gradient(140deg,var(--pri),#6f5bff);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:7px;box-shadow:0 0 12px -2px rgba(139,120,255,.5)}
+.faq-qt{flex:1}
+.faq-x{flex:none;font-size:22px;color:var(--pri2);transition:transform .25s;font-weight:300}
+.faq.open .faq-x{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.faq-a-in{padding:0 18px 18px 50px;color:var(--ink2);font-size:14px;text-wrap:pretty}
+
+#lb{position:fixed;inset:0;background:rgba(4,3,9,.92);display:none;z-index:200;place-items:center;flex-direction:column;padding:30px;cursor:zoom-out;backdrop-filter:blur(8px)}
+#lb.on{display:flex}
+#lb img{max-width:94%;max-height:82vh;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(139,120,255,.28)}
+#lb .cap{color:#c5bfe0;margin-top:16px;font-size:14px;max-width:800px;text-align:center}
+#lb .x{position:absolute;top:22px;right:28px;color:#fff;font-size:32px;cursor:pointer;opacity:.65;line-height:1;transition:opacity .15s}
+#lb .x:hover{opacity:1}
+
+.foot{padding:46px var(--sp);border-top:1px solid var(--line);color:var(--muted);font-size:13px;margin-top:24px;line-height:1.9}
+.foot a{font-weight:600}
+.backtop{position:fixed;right:24px;bottom:24px;width:46px;height:46px;border-radius:50%;background:linear-gradient(140deg,var(--pri),#6f5bff);
+ color:#fff;border:0;font-size:20px;cursor:pointer;box-shadow:0 10px 30px -8px rgba(139,120,255,.7),var(--edge);
+ opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:60}
+.backtop:hover{transform:translateY(-3px)}
+.backtop.show{opacity:1;pointer-events:auto}
+
+.topbar{display:none;position:sticky;top:0;z-index:70;background:rgba(8,7,14,.88);backdrop-filter:blur(12px);
+ border-bottom:1px solid var(--line);padding:11px 16px;align-items:center;justify-content:space-between}
+.topbar .tb-brand{display:flex;align-items:center;gap:9px;font-weight:700;color:#fff;font-size:14px}
+.topbar .tb-brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,var(--pri),#6f5bff);display:grid;place-items:center;color:#fff}
+.hamb{background:var(--pri-soft);border:1px solid rgba(139,120,255,.28);width:38px;height:38px;border-radius:10px;font-size:18px;color:var(--pri2);cursor:pointer}
+.scrim{display:none;position:fixed;inset:0;background:rgba(3,2,8,.62);z-index:80;backdrop-filter:blur(2px)}
+.scrim.on{display:block}
+
+@media(max-width:960px){
+ .side{position:fixed;left:0;top:0;z-index:90;transform:translateX(-100%);transition:transform .28s;box-shadow:0 0 60px rgba(0,0,0,.6);background:#0d0c16;backdrop-filter:blur(18px)}
+ .side.on{transform:translateX(0)}
+ .topbar{display:flex}
+ .flow-arrow{display:none} .flow-step{min-width:44%}
+}
+@media(max-width:400px){.flow-step{min-width:100%}}
+@media(prefers-reduced-motion:reduce){.hero::after,.hero-orbs span,.hero h1 .g,.hero .btn-p,body::after,#prog::after{animation:none} .hero-in>*{opacity:1;animation:none} *{scroll-behavior:auto}}
+
+/* --- 线性描边图标（替代 emoji）--- */
+.nl-ic svg,.sec-ic svg,.fs-ic svg,.callout .co-ic svg,.kicker svg,.brand .logo svg,.tb-brand .logo svg,.hamb svg,h4.mini svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
+.nl-ic{filter:none;color:var(--ink2);display:grid;place-items:center}
+.nl-ic svg{width:17px;height:17px}
+.nav-link:hover .nl-ic,.nav-link.active .nl-ic{color:var(--pri2)}
+.sec-ic{color:var(--pri2)} .sec-ic svg{width:26px;height:26px}
+.fs-ic{color:var(--pri2);display:grid;place-items:center} .flow-step.accent .fs-ic{color:#fff}
+.fs-ic svg{width:26px;height:26px;margin:6px auto 8px}
+.callout .co-ic{display:grid;place-items:center;padding-top:1px} .callout .co-ic svg{width:19px;height:19px}
+.callout.warn .co-ic{color:var(--warn)} .callout.tip .co-ic{color:var(--tip)} .callout.note .co-ic{color:var(--note)} .callout.case .co-ic{color:var(--case)}
+.kicker svg{width:15px;height:15px}
+.brand .logo svg{width:20px;height:20px;color:#fff} .tb-brand .logo svg{width:17px;height:17px;color:#fff}
+.hamb svg{width:18px;height:18px;margin:0 auto}
+h4.mini svg{width:16px;height:16px;display:inline-block;vertical-align:-2px}
+
+/* 品牌 Logo 图（替换图标方块）*/
+.brand{flex-direction:column;align-items:flex-start;gap:7px;padding:10px 10px 16px}
+.brand-logo{width:100%;max-width:230px;height:auto;display:block}
+.brand-sub{font-size:11px;color:var(--muted);letter-spacing:.3px}
+.tb-brand{gap:8px} .tb-brand .tb-logo{height:38px;width:auto;display:block} .tb-brand .tb-suf{font-weight:700;color:#fff;font-size:15px}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<div class="topbar">
+  <div class="tb-brand"><img class="tb-logo" src="data:image/png;base64,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" alt="PhanthyMovie"></div>
+  <button class="hamb" id="hamb"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+</div>
+<div class="scrim" id="scrim"></div>
+
+<div class="wrap">
+  <aside class="side" id="side">
+    <div class="brand"><img class="brand-logo" src="data:image/png;base64,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" alt="PhanthyMovie"><span class="brand-sub">使用指南 · 交互版</span></div>
+    <div class="searchbox">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
+      <input id="search" placeholder="搜索章节…" autocomplete="off">
+    </div>
+    <nav id="nav"><a href="#overview" class="nav-link" data-target="overview"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span><span class="nl-tx"><em>开始</em>总体流程概览</span></a><a href="#login" class="nav-link" data-target="login"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></span><span class="nl-tx"><em>第一部分</em>登录与落地页</span></a><a href="#home" class="nav-link" data-target="home"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span><span class="nl-tx"><em>新版首页</em>创作中心与项目管理</span></a><a href="#console" class="nav-link" data-target="console"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></span><span class="nl-tx"><em>第二部分</em>工作流 · 图片四步法</span></a><a href="#script" class="nav-link" data-target="script"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="nl-tx"><em>第二部分 · 第一步</em>剧本构建</span></a><a href="#draft" class="nav-link" data-target="draft"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h1.99c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></svg></span><span class="nl-tx"><em>第二部分 · 第二步</em>素材草图</span></a><a href="#fusion" class="nav-link" data-target="fusion"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span><span class="nl-tx"><em>第二部分 · 第三步</em>融合草图</span></a><a href="#batch" class="nav-link" data-target="batch"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg></span><span class="nl-tx"><em>第二部分 · 第四步</em>批量出图</span></a><a href="#asset" class="nav-link" data-target="asset"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="nl-tx"><em>第二部分 · 资产库</em>资产库 · 集中管理与精修</span></a><a href="#studio" class="nav-link" data-target="studio"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg></span><span class="nl-tx"><em>第三部分 · 视频</em>拍摄台</span></a><a href="#workshop" class="nav-link" data-target="workshop"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg></span><span class="nl-tx"><em>第三部分 · 视频</em>视频工坊</span></a><a href="#lab" class="nav-link" data-target="lab"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2v7.53a2 2 0 0 1-.21.9L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.07-10.13a2 2 0 0 1-.21-.9V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span><span class="nl-tx"><em>第三部分 · 视频</em>试验台 &amp; 小工具</span></a><a href="#canvas" class="nav-link" data-target="canvas"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg></span><span class="nl-tx"><em>第四部分</em>无限画布 · 节点式自由创作</span></a><a href="#team" class="nav-link" data-target="team"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="nl-tx"><em>第五部分</em>团队子账号 · 账号与星钻</span></a><a href="#faq" class="nav-link" data-target="faq"><span class="nl-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span class="nl-tx"><em>答疑</em>常见问题 FAQ</span></a></nav>
+  </aside>
+
+  <main class="main">
+    <header class="hero">
+      <div class="hero-orbs"><span></span><span></span><span></span></div>
+      <div class="hero-in">
+        <span class="kicker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg> AI 短剧工业化量产平台</span>
+        <h1>把一整个剧组，<br>装进<span class="g">一条流水线</span></h1>
+        <p class="lead">PhanthyMovie 把"剧本 → 成片"的全流程拆成可被流水线管理的工序，让一个人也能在 1 天内完成原本需要一个剧组才能完成的工作。</p>
+        <div class="creed-h">上传剧本，剩下的交给流水线。</div>
+        <div class="hero-cta">
+          <a class="btn btn-p" href="https://cloud.phanthy.com/phanmovie/" target="_blank" rel="noopener">▶ 打开 PhanthyMovie</a>
+          <a class="btn btn-g" href="#overview">先看总体流程 ↓</a>
+        </div>
+        <div class="hero-meta">
+          <div class="hm"><b><i class="cv" data-to="5">5</i> 步</b><span>剧本到成片</span></div>
+          <div class="hm"><b><i class="cv" data-to="4">4</i> 步</b><span>图片流水线</span></div>
+          <div class="hm"><b><i class="cv" data-to="14">14</i> 章</b><span>全功能覆盖</span></div>
+          <div class="hm"><b><i class="cv" data-to="1">1</i> 天</b><span>一个人成片</span></div>
+        </div>
+      </div>
+      <div class="hero-blend"></div>
+    </header>
+
+    <section id="overview" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div><div><div class="sec-chap">开始</div><h2>总体流程概览</h2></div></div><div class="sec-body">
+<p><b>PhanthyMovie</b> 是一套面向 AI 短剧工业化量产的 SaaS 平台。它把"剧本 → 成片"的全流程拆成一条可被流水线管理的工序，让一个人也能在 <b>1 天内</b>完成原本需要一个剧组才能完成的工作。</p>
+<div class="creed">上传剧本，剩下的交给流水线。</div>
+<p>整套产品的使用顺序是规则化的——<b>先把图片打磨到位</b>（剧本建库 → 素材草图 → 融合草图 → 批量出图），再进入视频环节（拍摄台 / 视频工坊）。<b class="hl">图片质量决定视频质量</b>，因为所有视频都是基于关键帧或首尾帧生成出来的。</p>
+
+<div class="flow">
+  <div class="flow-step" data-jump="script"><div class="fs-idx">1</div><div class="fs-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></div><div class="fs-t">解析剧本</div><div class="fs-s">剧本建库 · 纯文字</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" data-jump="draft"><div class="fs-idx">2</div><div class="fs-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h1.99c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></svg></div><div class="fs-t">素材草图</div><div class="fs-s">单素材出图</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" data-jump="fusion"><div class="fs-idx">3</div><div class="fs-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></div><div class="fs-t">融合草图</div><div class="fs-s">组合验证</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" data-jump="batch"><div class="fs-idx">4</div><div class="fs-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg></div><div class="fs-t">批量出图</div><div class="fs-s">关键帧+首尾帧</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step accent" data-jump="studio"><div class="fs-idx">5</div><div class="fs-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg></div><div class="fs-t">生成视频</div><div class="fs-s">拍摄台 / 视频工坊</div></div>
+</div>
+
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">关键提醒</div><div>图片质量非常重要，因为所有图都是视频的"关键帧"或"首尾帧"。任何在视频阶段出现的镜头不一致、人物变形、风格漂移，几乎都能追溯到前面四步图片没做好。<b>先把图片磨到 90 分，再去做视频。</b></div></div></div>
+</div></section><section id="login" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg></div><div><div class="sec-chap">第一部分</div><h2>登录与落地页</h2></div></div><div class="sec-body">
+<p>打开浏览器访问 <a href="https://cloud.phanthy.com/phanmovie/" target="_blank" rel="noopener">cloud.phanthy.com/phanmovie</a> 即可进入落地页。落地页用电影海报式的大画面承载主标语 <b>"你的专业制片厂，所想，即所得"</b>，下方陈列产品的四大典型用例。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig28.png" alt="落地页：右上角有"注册/登录"与"立即体验 / 咨询企业方案"两个核心入口" data-full="assets/fig28.png" data-cap="落地页：右上角有&quot;注册/登录&quot;与&quot;立即体验 / 咨询企业方案&quot;两个核心入口"><figcaption>落地页：右上角有"注册/登录"与"立即体验 / 咨询企业方案"两个核心入口</figcaption></figure>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">必读</div><div><b>登录是使用 PhanthyMovie 的第一步，也是后续所有功能的前置条件。</b>没有登录，所有的项目、资产、计费数据都无法关联到你的账户，平台会拒绝任何生成请求。</div></div></div>
+<p>点击右上角"注册/登录"后，会弹出一个居中的登录卡片，提供两种登录方式。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig29.png" alt="登录卡片：默认"用户密码"方式，也支持手机验证码" data-full="assets/fig29.png" data-cap="登录卡片：默认&quot;用户密码&quot;方式，也支持手机验证码"><figcaption>登录卡片：默认"用户密码"方式，也支持手机验证码</figcaption></figure>
+<ol class="steps"><li><span class="num">1</span><div>在落地页右上角点击"注册/登录"。</div></li><li><span class="num">2</span><div>在弹出的卡片里选择登录方式（默认是"用户密码"）。</div></li><li><span class="num">3</span><div>填写凭证 → 点击蓝色"登录"按钮。</div></li><li><span class="num">4</span><div>登录成功后会进入<b>新版首页（创作中心）</b>。</div></li></ol>
+<div class="group group-list"><h5>注意事项</h5><ul><li>用户名 / 密码由管理员在"用户管理"里下发，首次登录后建议立刻去设置里改密码。</li><li>手机验证码模式需要先在管理员处把手机号绑到账号上。</li><li>如果一直停在登录卡片，说明账号未授权或后端未连上，去找管理员复核<b>后端状态</b>是否绿灯。</li></ul></div>
+</div></section><section id="home" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></div><div><div class="sec-chap">新版首页</div><h2>创作中心与项目管理</h2></div></div><div class="sec-body">
+<p>登录成功后，你会进入 PhanthyMovie 的<b>全新首页</b>。顶部有四个 Tab：<b>创作中心、项目管理、公共资产库、素材广场</b>。下面重点介绍最常用的两个——<b>创作中心</b>（选择一种方式开始创作）与<b>项目管理</b>（管理你名下的所有项目）。页面右上角固定显示<b>充值中心、星钻余额、通知、头像（个人中心）</b>。</p>
+<h4 class="mini">创作中心</h4>
+<p>「创作中心」是登录后的默认落地页，主标题 <b>"开启您的创作旅程"</b>。中间并排陈列三张<b>创作方式卡</b>：</p>
+<div class="tri">
+<div class="tri-card"><div class="tri-n">①</div><b>AI 智能片场</b><p>即原来的"工作流"，已有剧本 / 小说时的首选：一键转分镜画面，自动识别角色与场景，产出可直接拍摄的全套镜头。点"开始 →"进入图片四步法。</p></div>
+<div class="tri-card"><div class="tri-n">②</div><b>全自动 AI 生成</b><p>输入主题、风格、片长，AI 自动生成剧本、分镜、画面与声音，一键产出完整短片。当前<b>即将开放</b>。</p></div>
+<div class="tri-card"><div class="tri-n">③</div><b>无限画布</b><p>即原来的"画布"，在自由画布上随手拼接素材、参考图与 AI 节点，边探索边创作，适合非线性表达。点"开始 →"进入画布。</p></div>
+</div>
+<figure class="shot"><img loading="lazy" src="assets/fig30.png" alt="创作中心：开启您的创作旅程 + 三张创作方式卡 + 平台作品" data-full="assets/fig30.png" data-cap="创作中心：开启您的创作旅程 + 三张创作方式卡 + 平台作品"><figcaption>创作中心：开启您的创作旅程 + 三张创作方式卡 + 平台作品</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">说明</div><div>无论从「AI 智能片场」还是「无限画布」点"开始"，都会先弹出<b>"创建新项目"</b>窗口——填写项目名称、选择画面比例（16:9 横屏 / 9:16 竖屏）与风格（写实 / 电影质感 / 3d / 动漫…），点"创建项目"即进入对应模式。</div></div></div>
+<figure class="shot"><img loading="lazy" src="assets/fig31.png" alt="创建新项目弹窗：项目名称 / 画面比例 / 风格" data-full="assets/fig31.png" data-cap="创建新项目弹窗：项目名称 / 画面比例 / 风格"><figcaption>创建新项目弹窗：项目名称 / 画面比例 / 风格</figcaption></figure>
+<h4 class="mini">平台作品</h4>
+<p>三张创作方式卡下方是新版新增的 <b>"平台作品"</b> 区，用来"看看其他创作者最近发布的短片"，右上角可在 <b>最新 / 热门</b> 之间切换。每部作品以视频卡片陈列，显示封面、时长、标题、作者与点赞数；鼠标悬停即可预览，点<b>爱心</b>就能为喜欢的短片点赞。页面底部还有一条提示"所有生成的项目将自动保存至您的个人库中"。</p>
+<h4 class="mini">项目管理</h4>
+<p>点顶部 <b>"项目管理"</b> 进入 <b>"我的项目"</b> 页，以网格列出<b>当前账号下的所有项目</b>，每张卡片显示封面、名称、创建日期，右下角 ⋮ 可重命名 / 删除。右上角提供关键词搜索、批量操作、时间倒序，以及<b>"+ 创建新项目"</b>。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig32.png" alt="项目管理 · 我的项目：网格列出账号下所有项目" data-full="assets/fig32.png" data-cap="项目管理 · 我的项目：网格列出账号下所有项目"><figcaption>项目管理 · 我的项目：网格列出账号下所有项目</figcaption></figure>
+<p>点进任意项目会弹出 <b>"创作模式"</b> 窗口（"同一项目下共享项目资产数据"），三种模式可选：</p>
+<figure class="shot"><img loading="lazy" src="assets/fig33.png" alt="创作模式弹窗：工作流 / 全自动 / 无限画布" data-full="assets/fig33.png" data-cap="创作模式弹窗：工作流 / 全自动 / 无限画布"><figcaption>创作模式弹窗：工作流 / 全自动 / 无限画布</figcaption></figure>
+<div class="tri">
+<div class="tri-card"><div class="tri-n">①</div><b>工作流</b><p>适合流程化拆解与自动化生成，强调创作链路与环节衔接。点"立即进入"进入图片四步法。</p></div>
+<div class="tri-card"><div class="tri-n">②</div><b>全自动 AI 生成</b><p>适合自动拆图、批量出图与生成，偏高效率批处理。当前<b>即将开放</b>。</p></div>
+<div class="tri-card"><div class="tri-n">③</div><b>无限画布</b><p>进入画布列表，用节点式创作方式组织镜头、图片与全景生成。点"立即进入"进入画布。</p></div>
+</div>
+<div class="callout note"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></div><div class="co-body"><div class="co-t">要点</div><div>弹窗底部提示"当前仅开放无限画布模式，后续模式会直接复用当前项目资产数据"——同一项目里无论切换哪种模式，素材与资产都是打通共享的。</div></div></div>
+</div></section>
+<section id="console" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></div><div><div class="sec-chap">第二部分</div><h2>工作流 · 图片四步法（主控制台）</h2></div></div><div class="sec-body">
+<p>主控制台是 PhanthyMovie 的"生产驾驶舱"，也就是<b>「工作流」模式</b>的工作区。从「创作中心 → AI 智能片场」，或在「项目管理」中打开项目并选择"工作流"，都会进入这里。<b>整个产品的核心使用顺序全部围绕它展开</b>——上面有 4 个大卡片，对应图片生成的 4 个步骤，必须严格按 1 → 2 → 3 → 4 的顺序走完，才会进入视频环节。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig1.png" alt="主控制台：左侧导航栏 + 四步流水线大卡 + 实时日志面板" data-full="assets/fig1.png" data-cap="主控制台：左侧导航栏 + 四步流水线大卡 + 实时日志面板"><figcaption>主控制台：左侧导航栏 + 四步流水线大卡 + 实时日志面板</figcaption></figure>
+<div class="tri">
+  <div class="tri-card"><div class="tri-n">①</div><b>左侧导航栏</b><p>主控制台、画布、我的项目、资产库、剧本拆解、拍摄台、视频工坊、试验台、小工具。</p></div>
+  <div class="tri-card"><div class="tri-n">②</div><b>底部管理员入口</b><p>用户管理、账户管理、计费统计、团队管理、系统设置、运营数据看板（普通用户看不到）。</p></div>
+  <div class="tri-card"><div class="tri-n">③</div><b>主区域·四步流水线</b><p>第一步剧本构建 → 第二步素材草图 → 第三步融合草图 → 第四步批量出图。</p></div>
+</div>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div><b>四步严格顺序依赖：</b>前一步未完成，后一步是灰的、点不动。后端状态显示"未连接"时任何任务都不会推进，先排查连通性再操作。同一项目可多次重跑某一步，但建议每次只跑一步、便于排错。</div></div></div>
+</div></section><section id="script" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></div><div><div class="sec-chap">第二部分 · 第一步</div><h2>剧本构建</h2></div></div><div class="sec-body">
+<p>剧本构建是整条流水线的起点。你只需要把剧本文本喂给系统，AI 会自动完成两件事：<b>①结构化拆解</b>（把整本剧本拆成 集 → 场 → 镜头 三级结构）；<b>②资产识别</b>（从剧本里抽出 角色 / 服装 / 场景 / 道具 清单）。</p>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div>这一步是<b>纯文字</b>，不会生成任何图片，你看到的所有输出都是文字结构——也因此不烧图片 / 视频额度，可以放心反复跑。</div></div></div>
+<figure class="shot"><img loading="lazy" src="assets/fig2.png" alt=""启动自动建库 — 暂存剧本管理"窗口：支持上传文件或粘贴文本" data-full="assets/fig2.png" data-cap="&quot;启动自动建库 — 暂存剧本管理&quot;窗口：支持上传文件或粘贴文本"><figcaption>"启动自动建库 — 暂存剧本管理"窗口：支持上传文件或粘贴文本</figcaption></figure>
+<ol class="steps"><li><span class="num">1</span><div>进入主控制台 → 点击"第一步｜剧本构建"卡片。</div></li><li><span class="num">2</span><div>在弹窗里选择剧本来源：<b>上传文件</b>（.txt / .pdf / .docx）或<b>粘贴文本</b>。</div></li><li><span class="num">3</span><div>系统实时显示<b>字数统计</b>，可点"AI 预估集/场"预估消耗的星钻。</div></li><li><span class="num">4</span><div>检查无误后点击右下角<b>"开始自动建库"</b>。</div></li></ol>
+<p>提交后跳回主控制台，日志面板逐行打印解析进度——依次跑「剧本拆解 → 镜头生成 → 项目梗概 → 素材补全 → 融合素材」等子任务，每条带时间戳和模型名，通常 1~3 分钟完成。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig3.png" alt="日志面板：逐行打印解析进度，带时间戳与模型名" data-full="assets/fig3.png" data-cap="日志面板：逐行打印解析进度，带时间戳与模型名"><figcaption>日志面板：逐行打印解析进度，带时间戳与模型名</figcaption></figure>
+<p>建库完成后，到左侧导航的<b>"剧本拆解"</b>里可以进一步精修（顶部多个 Tab，逐集逐场核对拆解结果），精修完成后回到主控制台进入第二步。</p>
+<div class="group group-list"><h5>使用建议</h5><ul><li>第一遍请<b>上传完整的整本剧本</b>解析，不要只传片段或单集，否则拆解结果不完整。</li><li>AI 识别出"路人甲 / 黑衣人"这种含糊命名，建议到资产库手动改名，避免后续融合素材爆炸。</li><li>原文里若已有 [人物介绍]、[场景] 等结构化标签，AI 会拆得更准。</li></ul></div>
+<div class="group group-warnlist"><h5>注意事项</h5><ul><li>删除一集会级联删除该集下所有场、镜头和素材，<b>操作前请确认</b>。</li><li>重新解析会覆盖原有结构化数据，但已经生成的图片不会丢。</li></ul></div>
+</div></section><section id="draft" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r=".6" fill="currentColor" stroke="none"/><circle cx="17.5" cy="10.5" r=".6" fill="currentColor" stroke="none"/><circle cx="8.5" cy="7.5" r=".6" fill="currentColor" stroke="none"/><circle cx="6.5" cy="12.5" r=".6" fill="currentColor" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h1.99c3.05 0 5.55-2.5 5.55-5.55C21.97 6.01 17.46 2 12 2z"/></svg></div><div><div class="sec-chap">第二部分 · 第二步</div><h2>素材草图</h2></div></div><div class="sec-body">
+<p>素材草图是给"建库时识别出的每一个素材"出<b>一张参考图</b>，让你在花大钱出关键帧之前，先用便宜的草图验证："AI 理解的这个角色 / 这件衣服 / 这个场景，是不是我想要的？"</p>
+<div class="callout note"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></div><div class="co-body"><div class="co-t">要点</div><div>它解决的核心问题是：<b>AI 描述对不对</b>。如果描述错了，后续所有图都会跟着错。</div></div></div>
+<figure class="shot"><img loading="lazy" src="assets/fig4.png" alt="第二步费用预估窗口：可配模型 / 清晰度 / 画面比例" data-full="assets/fig4.png" data-cap="第二步费用预估窗口：可配模型 / 清晰度 / 画面比例"><figcaption>第二步费用预估窗口：可配模型 / 清晰度 / 画面比例</figcaption></figure>
+<ol class="steps"><li><span class="num">1</span><div>在主控制台点击"第二步｜素材草图"卡片，弹出费用预估窗口。</div></li><li><span class="num">2</span><div>配置<b>模型</b>（如 phan nano Image 3）、<b>清晰度</b>（1K/2K/4K）、<b>画面比例</b>（角色三视图常用 1:1，竖屏短剧用 9:16）。</div></li><li><span class="num">3</span><div>看清"AI 草图（基础素材）"的 次数 / 原价 / 折后 价格。</div></li><li><span class="num">4</span><div>确认无误后点击<b>"确认并启动"</b>，约 1~3 分钟完成。</div></li></ol>
+<p>完成后到 <b>资产库 / 剧本拆解 → AI 草图</b> Tab 里查看每个素材的参考图。</p>
+<div class="group group-list"><h5>使用建议</h5><ul><li>第一次出图建议 <b>1K + 一次出多张</b>，挑出基本对的，再用 2K/4K 复跑最终图。</li><li>某素材明显画错（性别错、衣服颜色不对），先回资产库修描述，再单素材重跑。</li><li>草图阶段的"挑图 + 重跑"是整个项目<b>最具性价比</b>的环节，多花点时间在这里，后面省一大块。</li></ul></div>
+<div class="group group-warnlist"><h5>注意事项</h5><ul><li>本步骤产出的是<b>每个素材一张图</b>，不会自动挂载到任何镜头。</li><li>改完素材描述，已生成的草图不会自动重出，需进入资产库点"重新生成"。</li></ul></div>
+</div></section><section id="fusion" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></div><div><div class="sec-chap">第二部分 · 第三步</div><h2>融合草图</h2></div></div><div class="sec-body">
+<p>融合草图解决一个非常实际的问题：<b>单素材好看，组合到一起就不一定好看</b>。比如"苏可"（角色）穿"周末居家卫衣"（服装）拿"手机"（道具），三个素材分别都出得好，但组合出来可能比例不对、风格冲突。融合草图就是把这些组合提前打样，让你在批量出图之前<b>验证搭配效果</b>。</p>
+<ol class="steps"><li><span class="num">1</span><div>完成第二步并对素材草图满意后，点击"第三步｜融合草图"卡片。</div></li><li><span class="num">2</span><div>在弹窗配置模型、清晰度（同样建议 1K）、画面比例。</div></li><li><span class="num">3</span><div>看清"AI 草图（组合素材）"的预估次数和费用。</div></li><li><span class="num">4</span><div>点击<b>"确认并启动"</b>，日志面板会逐条打印"融合素材 / 角色+服装 / 着装角色+道具"等进度。</div></li></ol>
+<figure class="shot"><img loading="lazy" src="assets/fig5.png" alt="主控制台可并列查看各条流水线：「融合草图」已完成、「批量出图」正在运行" data-full="assets/fig5.png" data-cap="主控制台可并列查看各条流水线：「融合草图」已完成、「批量出图」正在运行"><figcaption>主控制台可并列查看各条流水线：「融合草图」已完成、「批量出图」正在运行</figcaption></figure>
+<div class="group group-case"><h5>典型场景</h5><ul><li>同一角色在不同场换不同衣服 → 系统自动生成多个"角色-服装"融合素材，需一一确认。</li><li>角色佩戴独特道具（手机、酒杯、武器）→ 生成"着装角色+道具"融合素材。</li></ul></div>
+<div class="group group-list"><h5>使用建议</h5><ul><li>融合素材数量通常是基础素材的 1~3 倍，可能比第二步多得多，<b>做好心理准备</b>。</li><li>某个融合明显错了（如杯子飘在空中），别硬重跑，先回资产库把基础素材修好再重新触发融合。</li></ul></div>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div>同样是<b>先调参数再确认启动</b>，否则会被自动按默认配置扣星钻。融合素材是"两两组合"，费用比第二步显著更高，事前看一眼预估金额。</div></div></div>
+</div></section><section id="batch" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg></div><div><div class="sec-chap">第二部分 · 第四步</div><h2>批量出图</h2></div></div><div class="sec-body">
+<p>前三步铺垫的图都属于"参考图"，真正用于视频的<b>关键帧 / 首尾帧</b>在第四步才会出。这是整条流水线<b>最重、也最贵</b>的一步，系统会自动做 5 件事：</p>
+<div class="five">
+  <div class="five-i"><span>1</span>自动配素材<em>把项目/集/场层级资产分配到每个 Shot</em></div>
+  <div class="five-i"><span>2</span>生成视频提示词<em>LLM 为每个场景生成视频 prompt</em></div>
+  <div class="five-i"><span>3</span>关键帧生图<em>图像 AI 生成每个镜头的关键帧</em></div>
+  <div class="five-i"><span>4</span>生成首尾帧提示词<em>LLM 为每个镜头生成首/尾帧提示词</em></div>
+  <div class="five-i"><span>5</span>首尾帧生图<em>图像 AI 根据提示词生成首尾帧图片</em></div>
+</div>
+<p>完成后，<b>所有镜头的关键帧和首尾帧都备好了</b>，可以直接进入拍摄台 / 视频工坊出视频。</p>
+<ol class="steps"><li><span class="num">1</span><div>点击"第四步｜批量出图"卡片，弹窗列出 5 个阶段的可调参数与预估。</div></li><li><span class="num">2</span><div>弹窗实时显示每阶段"次数 / 原价 / 折后"和最终合计金额。</div></li><li><span class="num">3</span><div>检查总价没问题后，点击<b>"确认并启动"</b>。</div></li><li><span class="num">4</span><div>日志面板持续刷新各子任务状态，全部打勾即代表<b>全部图片素材已就绪</b>。</div></li></ol>
+<div class="group group-list"><h5>使用建议</h5><ul><li>第四步是<b>整条流水线最贵的一步</b>，启动前一定看清总价。</li><li>启动前确认资产库里没有错的角色 / 服装，否则会有一批镜头白跑。</li><li>中途某些镜头失败，<b>不必整体重跑</b>，可到拍摄台单独补图。</li></ul></div>
+<div class="group group-warnlist"><h5>注意事项</h5><ul><li>任务被取消或系统重启后会从中断处续跑，不必从零重头。</li><li>单个项目同一时刻只能跑一个"批量出图"任务，第二次点会被拦截。</li><li>完成后请进入"拍摄台"逐场抽查关键帧 / 首尾帧效果，再决定是否进入视频环节。</li></ul></div>
+</div></section><section id="asset" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div><div><div class="sec-chap">第二部分 · 资产库</div><h2>资产库 · 集中管理与精修</h2></div></div><div class="sec-body">
+<p>资产库呈现<b>当前项目所有素材的集中视图</b>，顶部按类别分 Tab——角色、服装、场景、道具、着装角色、持道具角色、音频，以及"全部"。每张卡显示缩略图、类别、名称和详细属性；右下角永远有一张 <code>+ 新建</code> 占位卡，方便手动补素材。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig6.png" alt="资产库：按类别分 Tab，每张素材卡显示缩略图与属性" data-full="assets/fig6.png" data-cap="资产库：按类别分 Tab，每张素材卡显示缩略图与属性"><figcaption>资产库：按类别分 Tab，每张素材卡显示缩略图与属性</figcaption></figure>
+<p>把鼠标移到任意素材卡上，会出现<b>"编辑 / 重新生成 / 删除"</b>操作。对不满意的素材可直接重新生成，也可以"添加图片 / 粘贴图片"把你自己的图喂进来。</p>
+<figure class="shot shot-row"><div class="row2"><img loading="lazy" src="assets/fig7.png" alt="悬停卡片出现操作按钮；点"全部"可一屏总览本次自动流生成的所有资产" data-full="assets/fig7.png" data-cap="悬停卡片出现操作按钮；点&quot;全部&quot;可一屏总览本次自动流生成的所有资产"><img loading="lazy" src="assets/fig8.png" alt="悬停卡片出现操作按钮；点"全部"可一屏总览本次自动流生成的所有资产" data-full="assets/fig8.png" data-cap="悬停卡片出现操作按钮；点&quot;全部&quot;可一屏总览本次自动流生成的所有资产"></div><figcaption>悬停卡片出现操作按钮；点"全部"可一屏总览本次自动流生成的所有资产</figcaption></figure>
+<figure class="shot"><img loading="lazy" src="assets/fig9.png" alt="点"编辑"进入素材详情弹窗，可修改名称和"描述 / 提示词"" data-full="assets/fig9.png" data-cap="点&quot;编辑&quot;进入素材详情弹窗，可修改名称和&quot;描述 / 提示词&quot;"><figcaption>点"编辑"进入素材详情弹窗，可修改名称和"描述 / 提示词"</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div>如果对某个自动生成的资产不满意，在这里做<b>微调</b>（改描述重生、上传自己的图、重新编辑）是最快的；改完描述后已生成的图不会自动重出，需要点"重新生成"。</div></div></div>
+</div></section><section id="studio" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg></div><div><div class="sec-chap">第三部分 · 视频</div><h2>拍摄台</h2></div></div><div class="sec-body">
+<p>第四步完成后，所有图片素材都已"挂载"在镜头上，接下来就是把图片变成视频。视频环节主要在<b>拍摄台</b>和<b>视频工坊</b>完成，配套还有<b>试验台</b>做临时试验、<b>小工具</b>辅助维护。</p>
+<p>拍摄台是"批量出图"阶段的可视化工作区，也是视频生成的发起入口。它把第四步内部的子任务全部摊开成顶部 <b>7 个 Tab</b>，让你能在任一环节回查 / 修改 / 重跑：</p>
+<div class="chips"><span class="chip">自动配素材</span><span class="chip">视频提示词</span><span class="chip">关键帧生图</span><span class="chip">首尾帧提示词</span><span class="chip">首尾帧模式</span><span class="chip">关键帧视频生成</span><span class="chip">首尾帧视频生成</span></div>
+
+<h4 class="mini">自动配素材</h4>
+<figure class="shot"><img loading="lazy" src="assets/fig10.png" alt="左侧按集列出"已配齐场数/总场数"，选中某场展示需挂载的素材分类" data-full="assets/fig10.png" data-cap="左侧按集列出&quot;已配齐场数/总场数&quot;，选中某场展示需挂载的素材分类"><figcaption>左侧按集列出"已配齐场数/总场数"，选中某场展示需挂载的素材分类</figcaption></figure>
+<div class="callout case"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg></div><div class="co-body"><div class="co-t">典型场景</div><div>跑完第四步后过来抽查，发现某场少配了道具 → 单场重跑挂载。</div></div></div>
+
+<h4 class="mini">视频提示词</h4>
+<figure class="shot"><img loading="lazy" src="assets/fig11.png" alt="选中某场，右侧展示结构化"视频提示词"：配乐方向 / 整场戏叙述 / 逐镜参考" data-full="assets/fig11.png" data-cap="选中某场，右侧展示结构化&quot;视频提示词&quot;：配乐方向 / 整场戏叙述 / 逐镜参考"><figcaption>选中某场，右侧展示结构化"视频提示词"：配乐方向 / 整场戏叙述 / 逐镜参考</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div>进入视频生成前，先用 1~2 分钟通读提示词，把明显跑偏的地方手动改一下，比直接出视频再重做划算得多。</div></div></div>
+
+<h4 class="mini">关键帧生图</h4>
+<p>以网格画廊形式展示当前场所有镜头的关键帧，每张都能点开放大、单图重生。左侧带素材库分类侧栏。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig34.png" alt="关键帧画廊：发现某镜头表情不对 → 点开 → 重跑这一张" data-full="assets/fig34.png" data-cap="关键帧画廊：发现某镜头表情不对 → 点开 → 重跑这一张"><figcaption>关键帧画廊：发现某镜头表情不对 → 点开 → 重跑这一张</figcaption></figure>
+
+<h4 class="mini">首尾帧提示词 / 首尾帧模式</h4>
+<p><b>首尾帧提示词</b>：选中镜头后分"首帧/尾帧"两块文本编辑器，可 AI 生成、批量生成。<b>首尾帧模式</b>：分两栏陈列"首帧候选 / 尾帧候选"，每个候选可"上传图片 / 从素材库选"。对结果敏感的镜头，建议手动微调打光、运镜等关键字，能大幅提升成片观感。</p>
+
+<h4 class="mini">关键帧视频生成 / 首尾帧视频生成</h4>
+<p>这两个 Tab 是真正把图变成视频的地方，也是短剧成片最常用的入口。顶部参数条可设 <code>比例 9:16 / 分辨率 720p / 时长 5s / 模型 / 配音</code>，主区可挂关键帧、视频参考、音频参考，并带出"视频提示词"文本框。确认后点<b>"生成视频"</b>即可。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig12.png" alt="关键帧视频生成：顶部参数条 + 主区挂载关键帧与参考" data-full="assets/fig12.png" data-cap="关键帧视频生成：顶部参数条 + 主区挂载关键帧与参考"><figcaption>关键帧视频生成：顶部参数条 + 主区挂载关键帧与参考</figcaption></figure>
+<figure class="shot"><img loading="lazy" src="assets/fig13.png" alt="点击生成后显示"生成中"，约 2~3 分钟完成" data-full="assets/fig13.png" data-cap="点击生成后显示&quot;生成中&quot;，约 2~3 分钟完成"><figcaption>点击生成后显示"生成中"，约 2~3 分钟完成</figcaption></figure>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div>视频生成是平台<b>最贵的环节</b>，每提交一条都会扣星钻，提交前盯紧右上角的"本次预估消耗"。</div></div></div>
+
+<h4 class="mini">视频预览（成片）</h4>
+<p>生成完成后即可直接预览。这是一段 9:16 竖屏成片，播放器下方通常带<b>下载 / 添加到当前画布 / 截取当前帧 / 查看参数</b>等功能。到这里，一个"上传剧本 → 自动出图 → 拍摄台出视频"的完整流程就跑通了。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig14.png" alt="9:16 竖屏成片预览" data-full="assets/fig14.png" data-cap="9:16 竖屏成片预览"><figcaption>9:16 竖屏成片预览</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div>拍摄台是<b>"看素材 + 微调"</b>的地方，不是"重做素材"的地方。</div></div></div>
+</div></section><section id="workshop" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg></div><div><div class="sec-chap">第三部分 · 视频</div><h2>视频工坊</h2></div></div><div class="sec-body">
+<p>视频工坊是<b>视频生成任务的提交、监控与管理中心</b>。拍摄台是"按镜头逐个出视频"的精修工作区；视频工坊则是"批量提交 + 全局监控"的指挥中心。<b>也可以绕过前面所有步骤，直接在这里手动生成想要的视频。</b></p>
+<figure class="shot"><img loading="lazy" src="assets/fig15.png" alt="视频工坊：左侧任务队列 + 主区生成器" data-full="assets/fig15.png" data-cap="视频工坊：左侧任务队列 + 主区生成器"><figcaption>视频工坊：左侧任务队列 + 主区生成器</figcaption></figure>
+<div class="tri">
+  <div class="tri-card"><b>左侧任务队列</b><p>顶部 全部/完成 Tab，可按备注、集、场、镜号、时间戳筛选，支持一键下载、回收站；任务卡显示状态 + 备注 + 创建时间。</p></div>
+  <div class="tri-card"><b>主区生成器</b><p>填内容备注 → 设参数（比例/分辨率/时长/模型/配音/联网）→ 在"首尾帧模式"和"参考模式"间切换 → 配好参考后点"加入队列"。</p></div>
+</div>
+<div class="group group-case"><h5>典型场景</h5><ul><li><b>单镜头补拍</b>：拍摄台某镜头跑挂了 → 视频工坊手动调参数重新提交。</li><li><b>临时性创作</b>：临时来一个广告 / 片段 → 不需建库，直接配好首尾帧 + 提示词加入队列。</li><li><b>横向比对</b>：同一镜头用不同模型 / 参数各跑一次，全丢进队列，最后挑最好的。</li></ul></div>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div>提交前一定确认<b>生成参数</b>（特别是模型和时长），它们直接决定计费；这种手动方式没有素材一致性保护，适合单镜头 demo，不适合整剧批量。任务队列支持批量取消 / 重试，但取消后<b>已消耗的星钻不退</b>。</div></div></div>
+</div></section><section id="lab" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2v7.53a2 2 0 0 1-.21.9L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.07-10.13a2 2 0 0 1-.21-.9V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></div><div><div class="sec-chap">第三部分 · 视频</div><h2>试验台 &amp; 小工具</h2></div></div><div class="sec-body">
+<h4 class="mini">试验台</h4>
+<p>试验台相当于一个内置的 Playground，可以在任何时间做"试验性"的事：临时测提示词、单图快速出图试风格、写文案、或与 AI 对话 brainstorm。它<b>不写入项目数据</b>，是一个独立的快速创作沙盒，方便你在不污染主流水线的前提下试新东西。</p>
+<p>界面为 ChatGPT 式会话体验：左侧"新建会话"+ 历史列表，主区聊天区，底部可切换 生文/生图 模式、选模型、设并发数，支持上传参考图、用 @ 引用资产库素材，Ctrl+Enter 发送。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig35.png" alt="试验台：ChatGPT 式的快速创作沙盒" data-full="assets/fig35.png" data-cap="试验台：ChatGPT 式的快速创作沙盒"><figcaption>试验台：ChatGPT 式的快速创作沙盒</figcaption></figure>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div>试验台出的图不会自动入资产库，要手动保存或截图；同样会扣星钻（除非已豁免）。</div></div></div>
+
+<h4 class="mini">小工具 · 图片角度旋转</h4>
+<p>侧栏的"小工具"是一些和主流程关系不大、但用起来很顺手的独立功能。当前主要是<b>图片角度旋转</b>：上传一张图，通过 3D 视角预览拖动手柄或直接选参数，就能生成对应视角的图。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig16.png" alt="图片角度旋转：3D 视角预览 + 参数选择" data-full="assets/fig16.png" data-cap="图片角度旋转：3D 视角预览 + 参数选择"><figcaption>图片角度旋转：3D 视角预览 + 参数选择</figcaption></figure>
+<div class="tri">
+  <div class="tri-card"><b>水平角度</b><p>0°正面 / 45°右前 / 90°右侧 / 135°右后 / 180°背面 / 225°左后 / 270°左侧 / 315°左前</p></div>
+  <div class="tri-card"><b>垂直角度</b><p>俯视 −30° ~ 平视 0° ~ 仰视 60°</p></div>
+  <div class="tri-card"><b>缩放级别</b><p>广角 0 ~ 中景 5 ~ 特写 10</p></div>
+</div>
+<div class="callout case"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg></div><div class="co-body"><div class="co-t">典型场景</div><div>已有角色正面三视图，想要 45° 侧脸 → 上传图 + 选右前 45° → 生成提示词 → 直接出图。</div></div></div>
+</div></section><section id="canvas" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg></div><div><div class="sec-chap">第四部分</div><h2>无限画布 · 节点式自由创作</h2></div></div><div class="sec-body">
+<p>画布是 PhanthyMovie 在视频制作环节重点打磨的<b>节点式自由创作工作区</b>。它把"文本 / 图片 / 视频 / 音频 / 提示词 / 资产引用"统一抽象成可拖拽、可连线、可双击精修的<b>节点</b>，让你在一张无限大的画布上自由组织内容、串联流程，<b>跳出四步流水线的固定路径</b>，从一段剧本一路推进到分镜、图片、关键帧再到成片。</p>
+<div class="callout note"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></div><div class="co-body"><div class="co-t">要点</div><div><b>拍摄台</b>是按镜头精修的"工序面板"；<b>视频工坊</b>是任务队列驱动的"提交中心"；<b>画布</b>则是项目级的"自由创作沙盒"，适合把整个创作链路视觉化地串起来。</div></div></div>
+
+<h4 class="mini">入口与新建</h4>
+<p>「无限画布」有两个入口：在「创作中心」点<b>"无限画布"</b>卡片，或在「项目管理」打开项目后选<b>"无限画布"</b>模式。点进后看到画布管理页；没有画布就点右上角<b>"新建画布"</b>，输入名称即可创建。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig17.png" alt="画布管理页：右上角"新建画布"" data-full="assets/fig17.png" data-cap="画布管理页：右上角&quot;新建画布&quot;"><figcaption>画布管理页：右上角"新建画布"</figcaption></figure>
+
+<h4 class="mini">节点添加与右键菜单</h4>
+<p>新建后进入空白画布。左侧工具栏提供节点添加、素材库、历史记录、指针等；在空白处<b>右键</b>弹出快捷菜单：上传、添加节点、撤销、重做、粘贴。节点分四类，都支持从本地上传：</p>
+<div class="chips"><span class="chip">文本节点 · 剧本/提示词</span><span class="chip">图片节点 · 图像素材</span><span class="chip">视频节点 · 视频文件</span><span class="chip">音频节点 · 音频文件</span></div>
+<p>点左侧"资产库"入口，可把<b>当前项目已挂载的资产</b>（角色/服装/场景/关键帧等）直接拖入画布，不必重复上传。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig18.png" alt="空白画布 + 右键菜单 + 节点工具栏" data-full="assets/fig18.png" data-cap="空白画布 + 右键菜单 + 节点工具栏"><figcaption>空白画布 + 右键菜单 + 节点工具栏</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div>画布上<b>曾经生成过的内容都有记录</b>，不小心丢失或误删可以从历史里找回来，不必担心一夜白干。</div></div></div>
+
+<h4 class="mini">完整创作演示</h4>
+<p>用一个做好的画布演示完整能力：文本节点、角色/服装/场景等图片节点、关键帧、视频，都以分组形式在一张画上串联起来，节点之间用连线表达上下游关系。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig19.png" alt="完整创作链路以分组形式在一张画布上串联" data-full="assets/fig19.png" data-cap="完整创作链路以分组形式在一张画布上串联"><figcaption>完整创作链路以分组形式在一张画布上串联</figcaption></figure>
+
+<h4 class="mini">端到端示例：从剧本到成片</h4>
+<p><b>① 文本节点 → 图片节点：</b>在文本节点写好角色设定（角色名、年龄、性别、身高、学校等），连线到图片节点即以这段文本为参考生图。下图角色"小葵"生成了形象和三视图（正面/四分之三/侧面）。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig20.png" alt="① 文本节点"小葵" → 生成角色形象与三视图" data-full="assets/fig20.png" data-cap="① 文本节点&quot;小葵&quot; → 生成角色形象与三视图"><figcaption>① 文本节点"小葵" → 生成角色形象与三视图</figcaption></figure>
+<p><b>② 图片节点的丰富功能：</b>选中图片节点，顶部出现一整排操作——反推、裁剪、扩图、抠图、打光、擦除、重绘、九宫格、标注、旋转镜像、下载、预览。可勾选"主图参与生成"配合提示词继续迭代。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig21.png" alt="② 图片节点顶部操作条：反推/裁剪/扩图/抠图/打光/重绘…" data-full="assets/fig21.png" data-cap="② 图片节点顶部操作条：反推/裁剪/扩图/抠图/打光/重绘…"><figcaption>② 图片节点顶部操作条：反推/裁剪/扩图/抠图/打光/重绘…</figcaption></figure>
+<p><b>③ 场景生图（中英文提示词都支持）：</b>文本节点写好提示词连线到图片节点即可。下图教室场景就是用英文提示词生成的一组候选。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig22.png" alt="③ 用英文提示词生成的教室场景候选" data-full="assets/fig22.png" data-cap="③ 用英文提示词生成的教室场景候选"><figcaption>③ 用英文提示词生成的教室场景候选</figcaption></figure>
+<p><b>④ 图片节点 → 视频节点：</b>图片/关键帧满意后，把图片节点连线到视频节点，按参考生成视频。完成后可在节点直接预览，或点开全屏播放器（支持下载、倍速、全屏）。</p>
+<figure class="shot shot-row"><div class="row2"><img loading="lazy" src="assets/fig23.png" alt="④ 图片节点连线到视频节点，生成并预览成片" data-full="assets/fig23.png" data-cap="④ 图片节点连线到视频节点，生成并预览成片"><img loading="lazy" src="assets/fig24.png" alt="④ 图片节点连线到视频节点，生成并预览成片" data-full="assets/fig24.png" data-cap="④ 图片节点连线到视频节点，生成并预览成片"></div><figcaption>④ 图片节点连线到视频节点，生成并预览成片</figcaption></figure>
+
+<h4 class="mini">视频合成：多段合成为一整段成片</h4>
+<p>视频与视频之间还能做<b>"视频合成"</b>：把多段视频和音频连线到同一个"视频合成"节点，点"打开视频合成"进入合成界面。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig25.png" alt="把多段视频/音频连线到"视频合成"节点" data-full="assets/fig25.png" data-cap="把多段视频/音频连线到&quot;视频合成&quot;节点"><figcaption>把多段视频/音频连线到"视频合成"节点</figcaption></figure>
+<p>合成界面是一个带时间轴的剪辑器：可对每个片段做<b>分割、向左/向右裁剪</b>，调整<b>音量、变速（0.5x~4x）、时长</b>，还支持<b>"画中画"</b>叠放拖拽。剪好后点右上角<b>"导出"</b>渲染成一整段成片。</p>
+<figure class="shot shot-row"><div class="row2"><img loading="lazy" src="assets/fig26.png" alt="带时间轴的剪辑器：分割 / 裁剪 / 变速 / 画中画 / 导出" data-full="assets/fig26.png" data-cap="带时间轴的剪辑器：分割 / 裁剪 / 变速 / 画中画 / 导出"><img loading="lazy" src="assets/fig27.png" alt="带时间轴的剪辑器：分割 / 裁剪 / 变速 / 画中画 / 导出" data-full="assets/fig27.png" data-cap="带时间轴的剪辑器：分割 / 裁剪 / 变速 / 画中画 / 导出"></div><figcaption>带时间轴的剪辑器：分割 / 裁剪 / 变速 / 画中画 / 导出</figcaption></figure>
+<div class="callout note"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></div><div class="co-body"><div class="co-t">要点</div><div>文本、图片、视频、音频节点用的都是同样的"填提示词 → 生成"逻辑，上手一处即通用。</div></div></div>
+
+<h4 class="mini">节点打组（分组管理）</h4>
+<p>节点越堆越多时，用「打组」把相关节点归到一起统一管理。鼠标框选一批节点即打成一组，组上方浮出一排操作：</p>
+<div class="group group-list"><h5>打组操作</h5><ul><li><b>背景色</b>：改整个组底色，用颜色区分不同角色/场景/分镜。</li><li><b>排列</b>：组内节点自动对齐，支持水平/垂直排列。</li><li><b>整组执行</b>：一键重新生成组内所有可生成节点，适合改完上游后批量刷新。</li><li><b>解组 / 批量下载</b>：解散分组；把组内文件一次性打包下载。</li></ul></div>
+<figure class="shot"><img loading="lazy" src="assets/fig36.png" alt="框选打组后，组上方浮出背景色/排列/整组执行/解组/批量下载" data-full="assets/fig36.png" data-cap="框选打组后，组上方浮出背景色/排列/整组执行/解组/批量下载"><figcaption>框选打组后，组上方浮出背景色/排列/整组执行/解组/批量下载</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div>画布节点一多就容易失控，养成"一个角色 / 一场戏一组，配好背景色"的习惯，后期查找、整组重生、批量导出都会省事很多。</div></div></div>
+
+<h4 class="mini">使用建议</h4>
+<div class="group group-list"><h5>画布使用建议</h5><ul><li>画布特别适合<b>单段剧本 / 单镜头 demo / 临时创意验证</b>，避开四步流程的"全量"开销。</li><li>节点之间的<b>连线关系决定上下文传递</b>——上游内容会作为下游输入，连线时要清楚谁是输入、谁是输出。</li><li>不满意时优先"追加/修改提示词"迭代，再不行才换风格/换模型，最后才整段重做，能省一大块积分。</li><li>设好<b>主图</b>后，下游图片/关键帧/视频节点会自动沿用主图风格，显著提升一致性。</li></ul></div>
+</div></section><section id="team" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="sec-chap">第五部分</div><h2>团队子账号 · 账号与星钻</h2></div></div><div class="sec-body">
+<p>本模块主要讲<b>账号怎么管、星钻怎么分、消耗怎么查</b>。它分成两块——<b>团队管理</b>（主账号如何创建成员、分配星钻、监控消耗）和<b>个人中心</b>（当前账号的会员、星钻、消耗明细与设置）。一旦开始多人协作或需要对账，就是最常用的地方。</p>
+
+<h4 class="mini">团队管理 · 主账号的后勤中枢</h4>
+<p>一个企业/工作室通常只买一个主账号充值星钻，再由主账号批量开成员子账号，把星钻按需分配给每个成员。它解决三件事：<b>给谁开账号、给谁分多少星钻、每个人花了多少</b>。点左侧导航栏底部<b>"团队管理"</b>进入。</p>
+<figure class="shot shot-row"><div class="row2"><img loading="lazy" src="assets/fig37.png" alt="团队管理：顶部"数据管理"总览 + 下方"成员管理"列表" data-full="assets/fig37.png" data-cap="团队管理：顶部&quot;数据管理&quot;总览 + 下方&quot;成员管理&quot;列表"><img loading="lazy" src="assets/fig38.png" alt="团队管理：顶部"数据管理"总览 + 下方"成员管理"列表" data-full="assets/fig38.png" data-cap="团队管理：顶部&quot;数据管理&quot;总览 + 下方&quot;成员管理&quot;列表"></div><figcaption>团队管理：顶部"数据管理"总览 + 下方"成员管理"列表</figcaption></figure>
+<p>页面顶部一排数字是团队"仪表盘"：<b>团队项目 / 团队席位（已用·可扩容）/ 团队消耗星钻 / 团队剩余星钻 / 剩余可分配星钻（可加值）</b>，一眼看清资源用到哪了。</p>
+<div class="callout note"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg></div><div class="co-body"><div class="co-t">要点</div><div>顶部提示"团队资产库为企业版会员权益"——跨成员共享的团队资产库属于企业版能力；个人/进阶版可以创建成员、分配星钻，但团队级资产库需点"开通会员"升级后才启用。</div></div></div>
+<div class="group group-list"><h5>创建成员账号</h5><ul><li>在成员管理区右上角点<b>"+ 创建成员账号"</b>。</li><li>填成员名称、备注等，系统自动派生 <code>主账号-序号@phantymovie.com</code> 账号。</li><li>创建成功后可给他分配项目、下发星钻。</li><li>把账号和初始密码交给成员即可登录（登录方式见"登录"章节）。</li></ul></div>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div>建议在<b>备注</b>里写清这个账号是谁、做什么用（如"做视频"、"创作室"），人一多全靠备注区分。暂时不用的账号切到<b>禁用</b>，既保留数据又不占登录，比删除更稳妥。</div></div></div>
+
+<h4 class="mini">星钻下发与回收</h4>
+<p>星钻在"主账号"和"成员账号"之间<b>可以双向流动</b>：主账号把星钻<b>下发</b>给成员消耗，成员没用完的也能被<b>回收</b>到主账号重新分配。在某成员行点"更多 → 调整星钻"，弹窗顶部有"下发"和"回收"两个 Tab。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig39.png" alt=""调整星钻"弹窗：下发 / 回收两个 Tab，显示成员余额与主账号可分配额" data-full="assets/fig39.png" data-cap="&quot;调整星钻&quot;弹窗：下发 / 回收两个 Tab，显示成员余额与主账号可分配额"><figcaption>"调整星钻"弹窗：下发 / 回收两个 Tab，显示成员余额与主账号可分配额</figcaption></figure>
+<div class="callout warn"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><div class="co-body"><div class="co-t">注意</div><div>下发和回收都会即时改变双方余额，<b>回收金额不能超过成员当前余额，下发金额不能超过主账号可分配额度</b>。填数字前先看清弹窗里的两个参考值。</div></div></div>
+
+<h4 class="mini">个人中心 · 我自己的设置与账单</h4>
+<p>个人中心是当前登录账号自己的"设置与账单"面板，主账号和成员账号都有。点界面<b>右上角头像</b>展开下拉面板，顶部是账号头像+手机号（脱敏）、会员版本与剩余天数（可升级/续费）、<b>星钻余额</b>（醒目大字）。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig40.png" alt="个人中心下拉面板：账号/会员信息 + 常用功能项" data-full="assets/fig40.png" data-cap="个人中心下拉面板：账号/会员信息 + 常用功能项"><figcaption>个人中心下拉面板：账号/会员信息 + 常用功能项</figcaption></figure>
+<p>常用入口包括：账号设置、交易记录、我的消耗明细、AI 水印设置、退出登录。主账号还会看到"您的团队成员账户中还有 X 星钻未使用" + 一键<b>"转回主账号"</b>。</p>
+
+<h4 class="mini">我的消耗明细 · 对账工具</h4>
+<p>这是排查"星钻花在哪了"的对账工具，按任务逐条列出明细。顶部时间筛选（今天/昨天/本周/本月…）+ "全部类型/全部状态"下拉；表格字段有功能点、标题、模型、项目、状态、任务时间、耗时、星钻。</p>
+<figure class="shot"><img loading="lazy" src="assets/fig41.png" alt="我的消耗明细：按任务逐条列出耗费，支持时间/类型/状态筛选" data-full="assets/fig41.png" data-cap="我的消耗明细：按任务逐条列出耗费，支持时间/类型/状态筛选"><figcaption>我的消耗明细：按任务逐条列出耗费，支持时间/类型/状态筛选</figcaption></figure>
+<div class="callout tip"><div class="co-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></div><div class="co-body"><div class="co-t">建议</div><div><b>对账小技巧</b>：怀疑某天星钻掉得快，把时间筛成"昨天"，按"星钻"列从高到低扫一眼，最贵的那几笔（通常是"生视频"）一目了然。失败但也扣了星钻的任务，可据此截图找管理员核对。</div></div></div>
+</div></section><section id="faq" class="sec"><div class="sec-head"><div class="sec-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></div><div><div class="sec-chap">答疑</div><h2>常见问题 FAQ</h2></div></div><div class="sec-body"><div class="faq"><button class="faq-q"><span class="faq-badge">Q1</span><span class="faq-qt">剧本上传后任务卡在"剧本拆解"不动，怎么办？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">检查主控制台底部"<b>后端状态</b>"是否为绿色；如果是灰色，先让管理员排查后端服务。其次到 <b>系统设置 → 资源监控</b> 看是不是任务队列堵了。</div></div></div><div class="faq"><button class="faq-q"><span class="faq-badge">Q2</span><span class="faq-qt">同一个角色每次生成长相不一致？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">去<b>资产库</b>给该角色固定一张参考图，所有后续出图都会以这张图作为风格锚点，能显著提升一致性。</div></div></div><div class="faq"><button class="faq-q"><span class="faq-badge">Q3</span><span class="faq-qt">视频生成到一半被取消了，要重头跑吗？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">不用。所有任务都有"<b>中断恢复</b>"机制，从最后一个保存的状态续跑即可。</div></div></div><div class="faq"><button class="faq-q"><span class="faq-badge">Q4</span><span class="faq-qt">怎么控制不烧钱？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">四个抓手：① 第二/三步用 1K 出图，挑出对的再 2K/4K 复跑；② 系统设置 → 计费限额配置 给每个用户设上限；③ 系统设置 → 默认模型 把非核心环节切到便宜模型；④ 启动任何一步前，先看清费用预估弹窗里的星钻总数。</div></div></div><div class="faq"><button class="faq-q"><span class="faq-badge">Q5</span><span class="faq-qt">能多人协作同一个项目吗？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">可以。管理员在 <b>用户管理 → 项目权限</b> 里把同一项目分配给多个用户，他们看到的内容一致，相互改动实时同步。</div></div></div><div class="faq"><button class="faq-q"><span class="faq-badge">Q6</span><span class="faq-qt">如果不想走主控制台 4 步，能直接出视频吗？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">可以，进入<b>视频工坊</b>，上传首帧/尾帧 + 写视频提示词 + 加入队列。但这种方式<b>没有素材一致性保护</b>，适合单镜头 demo，不适合整剧批量。</div></div></div><div class="faq"><button class="faq-q"><span class="faq-badge">Q7</span><span class="faq-qt">试验台里出的图能直接用到项目里吗？</span><span class="faq-x">+</span></button><div class="faq-a"><div class="faq-a-in">试验台不会自动入资产库，需在画面上右键/长按"保存到资产库"才会成为正式素材，或先下载到本地再到资产库上传。</div></div></div></div></section>
+
+    <footer class="foot">
+      本手册由 PhanthyMovie7.22 产品文档改编为交互式网页版 · 深色科技风 · 面向新用户自助上手<br>
+      产品直达：<a href="https://cloud.phanthy.com/phanmovie/" target="_blank" rel="noopener">cloud.phanthy.com/phanmovie</a>
+    </footer>
+  </main>
+</div>
+
+<div id="lb"><span class="x">✕</span><img id="lbimg" src="" alt=""><div class="cap" id="lbcap"></div></div>
+<button class="backtop" id="backtop">↑</button>
+
+<script>
+// progress bar
+const prog=document.getElementById('prog');
+function onScroll(){
+  const h=document.documentElement;
+  const sc=h.scrollTop/(h.scrollHeight-h.clientHeight);
+  prog.style.width=(sc*100)+'%';
+  document.getElementById('backtop').classList.toggle('show',h.scrollTop>500);
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+
+// scrollspy
+const links=[...document.querySelectorAll('.nav-link')];
+const secs=links.map(l=>document.getElementById(l.dataset.target));
+const spy=new IntersectionObserver((es)=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      links.forEach(l=>l.classList.remove('active'));
+      const l=links.find(x=>x.dataset.target===e.target.id);
+      if(l)l.classList.add('active');
+    }
+  });
+},{rootMargin:'-15% 0px -70% 0px',threshold:0});
+secs.forEach(s=>s&&spy.observe(s));
+
+// flow jump
+document.querySelectorAll('.flow-step').forEach(f=>{
+  f.addEventListener('click',()=>{
+    const t=document.getElementById(f.dataset.jump);
+    if(t)t.scrollIntoView({behavior:'smooth'});
+  });
+});
+
+// lightbox
+const lb=document.getElementById('lb'),lbimg=document.getElementById('lbimg'),lbcap=document.getElementById('lbcap');
+document.querySelectorAll('.shot img').forEach(im=>{
+  im.addEventListener('click',()=>{lbimg.src=im.dataset.full;lbcap.textContent=im.dataset.cap||'';lb.classList.add('on');});
+});
+lb.addEventListener('click',()=>lb.classList.remove('on'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('on');});
+
+// faq
+document.querySelectorAll('.faq-q').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const f=b.parentElement,a=f.querySelector('.faq-a');
+    const open=f.classList.contains('open');
+    if(open){f.classList.remove('open');a.style.maxHeight=null;}
+    else{f.classList.add('open');a.style.maxHeight=a.scrollHeight+'px';}
+  });
+});
+
+// search filter (nav)
+const search=document.getElementById('search');
+search.addEventListener('input',()=>{
+  const q=search.value.trim().toLowerCase();
+  links.forEach(l=>{
+    const txt=l.textContent.toLowerCase();
+    l.style.display=(!q||txt.includes(q))?'':'none';
+  });
+});
+
+// mobile nav
+const side=document.getElementById('side'),scrim=document.getElementById('scrim');
+document.getElementById('hamb').addEventListener('click',()=>{side.classList.add('on');scrim.classList.add('on');});
+scrim.addEventListener('click',()=>{side.classList.remove('on');scrim.classList.remove('on');});
+document.querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',()=>{side.classList.remove('on');scrim.classList.remove('on');}));
+document.getElementById('backtop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+// hero 入场 + 数字滚动
+(function(){
+  var rm=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var hero=document.querySelector('.hero');
+  if(hero&&!rm){ hero.classList.add('anim'); setTimeout(function(){hero.classList.remove('anim');},1900); } // 动画后释放，确保内容始终可见
+  document.querySelectorAll('.cv').forEach(function(el){
+    var to=+el.dataset.to; if(rm){el.textContent=to;return;}
+    var dur=1150,t0=performance.now();
+    setTimeout(function(){el.textContent=to;},dur+300); // 兜底：确保最终值
+    (function tick(t){var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(e*to);if(p<1)requestAnimationFrame(tick);else el.textContent=to;})(t0);
+  });
+})();
+onScroll();
+</script>
+</body>
+</html>
